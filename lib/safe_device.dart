@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
-import 'package:trust_location/trust_location.dart';
 
 class SafeDevice {
   static const MethodChannel _channel = const MethodChannel('safe_device');
@@ -13,15 +12,6 @@ class SafeDevice {
     return isJailBroken;
   }
 
-  //Can this device mock location - no need to root!
-  static Future<bool> get canMockLocation async {
-    if (Platform.isAndroid) {
-      return await TrustLocation.isMockLocation;
-    } else {
-      return !await isRealDevice || await isJailBroken;
-    }
-  }
-
   // Checks whether device is real or emulator
   static Future<bool> get isRealDevice async {
     final bool isRealDevice = await _channel.invokeMethod('isRealDevice');
@@ -30,8 +20,7 @@ class SafeDevice {
 
   // (ANDROID ONLY) Check if application is running on external storage
   static Future<bool> get isOnExternalStorage async {
-    final bool isOnExternalStorage =
-        await _channel.invokeMethod('isOnExternalStorage');
+    final bool isOnExternalStorage = await _channel.invokeMethod('isOnExternalStorage');
     return isOnExternalStorage;
   }
 
@@ -39,25 +28,17 @@ class SafeDevice {
   static Future<bool> get isSafeDevice async {
     final bool isJailBroken = await _channel.invokeMethod('isJailBroken');
     final bool isRealDevice = await _channel.invokeMethod('isRealDevice');
-    final bool canMockLocation = await SafeDevice.canMockLocation;
     if (Platform.isAndroid) {
-      final bool isOnExternalStorage =
-          await _channel.invokeMethod('isOnExternalStorage');
-      return isJailBroken ||
-              canMockLocation ||
-              !isRealDevice ||
-              isOnExternalStorage == true
-          ? false
-          : true;
+      final bool isOnExternalStorage = await _channel.invokeMethod('isOnExternalStorage');
+      return isJailBroken || !isRealDevice || isOnExternalStorage == true ? false : true;
     } else {
-      return isJailBroken || !isRealDevice || canMockLocation;
+      return isJailBroken || !isRealDevice;
     }
   }
 
   // (ANDROID ONLY) Check if development Options is enable on device
   static Future<bool> get isDevelopmentModeEnable async {
-    final bool isDevelopmentModeEnable =
-        await _channel.invokeMethod('isDevelopmentModeEnable');
+    final bool isDevelopmentModeEnable = await _channel.invokeMethod('isDevelopmentModeEnable');
     return isDevelopmentModeEnable;
   }
 }
